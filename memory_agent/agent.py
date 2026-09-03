@@ -37,8 +37,14 @@ class MemoryAgent:
         instructions = REPLY_INSTRUCTIONS
         if memories:
             instructions += "\n\nRemembered about the user:\n" + "\n".join(f"- {m}" for m in memories)
-        # history is a list of {"role": ..., "content": ...} from prior turns.
-        input_msgs = [m for m in history if m.get("role") in ("user", "assistant")]
+        # history is a list of {"role", "content", ...} from prior turns. Gradio's
+        # chatbot adds extra keys (metadata/options) that the Responses API rejects,
+        # so rebuild clean {role, content} messages.
+        input_msgs = [
+            {"role": m["role"], "content": m.get("content", "")}
+            for m in history
+            if m.get("role") in ("user", "assistant") and m.get("content")
+        ]
         input_msgs.append({"role": "user", "content": message})
         kwargs = {
             "model": CONFIG.model,
